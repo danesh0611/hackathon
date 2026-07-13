@@ -9,9 +9,11 @@ import { detectScam } from "@/services/citizen";
 import type { ScamDetectionResult, ScamSource } from "@/types/api";
 import { Loader2, MessageSquareWarning, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FileDropzone } from "@/components/upload/FileDropzone";
 
 export default function ScamCheck() {
   const [text, setText] = useState("");
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [source, setSource] = useState<ScamSource>("sms");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<ScamDetectionResult | null>(null);
@@ -23,11 +25,12 @@ export default function ScamCheck() {
   };
 
   const handleAnalyze = async () => {
-    if (!text.trim()) return;
+    if (source !== "audio" && !text.trim()) return;
+    if (source === "audio" && !audioFile) return;
     setIsAnalyzing(true);
     setResult(null);
     try {
-      const res = await detectScam({ text, source });
+      const res = await detectScam({ text, source, audioFile: audioFile || undefined });
       setResult(res);
     } catch (err) {
       console.error(err);
@@ -53,23 +56,35 @@ export default function ScamCheck() {
 
         <div className="rounded-xl border border-border bg-card shadow-sm p-6">
           <Tabs defaultValue="sms" onValueChange={(v) => setSource(v as ScamSource)}>
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="sms">SMS</TabsTrigger>
               <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
               <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="audio">Audio</TabsTrigger>
             </TabsList>
             
             <TabsContent value={source} className="mt-0">
-              <Textarea 
-                placeholder={placeholders[source]}
-                className="min-h-[160px] text-base resize-y mb-4"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
+              {source === "audio" ? (
+                <div className="mb-4">
+                  <FileDropzone 
+                    label="Upload Audio Recording"
+                    type="audio"
+                    accept="audio/*"
+                    onFileSelect={(f) => setAudioFile(f)}
+                  />
+                </div>
+              ) : (
+                <Textarea 
+                  placeholder={placeholders[source as keyof typeof placeholders]}
+                  className="min-h-[160px] text-base resize-y mb-4"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              )}
               <Button 
                 size="lg" 
                 className="w-full"
-                disabled={!text.trim() || isAnalyzing}
+                disabled={(source !== "audio" && !text.trim()) || (source === "audio" && !audioFile) || isAnalyzing}
                 onClick={handleAnalyze}
               >
                 {isAnalyzing ? (

@@ -54,11 +54,12 @@ export interface CurrencyDetectionResult {
 
 // ─── Citizen: Scam Text Detection ────────────────────────────────────
 
-export type ScamSource = "sms" | "whatsapp" | "email";
+export type ScamSource = "sms" | "whatsapp" | "email" | "audio";
 
 export interface ScamDetectRequest {
-  text: string;
+  text?: string;
   source: ScamSource;
+  audioFile?: File;
 }
 
 export interface ScamDetectionResult {

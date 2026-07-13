@@ -31,11 +31,6 @@ const mockCurrencyResult: CurrencyDetectionResult = {
     "The submitted ₹500 note shows significant deviations from authentic currency. The watermark of Mahatma Gandhi is absent, the security thread appears to be pasted on rather than embedded, and the micro-lettering 'RBI' and '500' under magnification are blurred and inconsistent. The intaglio printing on the Ashoka Pillar emblem lacks the characteristic raised texture. These findings strongly indicate a counterfeit note produced via high-resolution color printing.",
 };
 
-const mockScamResult: ScamDetectionResult = {
-  risk: "High",
-  reason: "Digital Arrest Pattern — impersonating government authority, demanding immediate payment via UPI, threatening legal action. Classic social engineering attack.",
-  confidence: 96,
-};
 
 const mockAlerts: AlertItem[] = [
   { id: "ALT-001", type: "scam", title: "UPI Fraud Cluster", description: "Multiple UPI fraud reports in this area", lat: 13.0827, lng: 80.2707, date: "2026-07-08", severity: "high" },
@@ -96,14 +91,34 @@ export async function detectCurrency(image: File): Promise<CurrencyDetectionResu
 }
 
 export async function detectScam(payload: ScamDetectRequest): Promise<ScamDetectionResult> {
-  // Call the actual API regardless of mock settings
-  const { data } = await axios.post("/api/scamshield/analyze-text", {
-    text: payload.text,
-  });
+  let data: any;
+
+  if (payload.source === "audio" && payload.audioFile) {
+    const formData = new FormData();
+    formData.append("file", payload.audioFile);
+    const response = await axios.post("/api/scamshield/analyze-audio", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    data = response.data;
+  } else {
+    const response = await axios.post("/api/scamshield/analyze-text", {
+      text: payload.text || "",
+      engine: "bedrock",
+      model_id: "us.amazon.nova-pro-v1:0",
+      aws_region: "us-east-1"
+    });
+    data = response.data;
+  }
 
   let risk: "Low" | "Medium" | "High" = "Medium";
-  if (data.scam_probability > 75) risk = "High";
-  else if (data.scam_probability < 30) risk = "Low";
+  if (data.verdict) {
+    const verdict = data.verdict.toUpperCase();
+    if (verdict === "SCAM" || verdict === "LIKELY SCAM" || data.scam_probability >= 70) risk = "High";
+    else if (verdict.includes("SAFE") || data.scam_probability <= 30) risk = "Low";
+  } else {
+    if (data.scam_probability >= 70) risk = "High";
+    else if (data.scam_probability <= 30) risk = "Low";
+  }
 
   const reason = data.reasons?.length 
     ? data.reasons.map((r: any) => r.why).join(" ") 
@@ -112,7 +127,7 @@ export async function detectScam(payload: ScamDetectRequest): Promise<ScamDetect
   return {
     risk,
     reason,
-    confidence: Math.round(data.scam_probability),
+    confidence: data.scam_probability ? Number(data.scam_probability.toFixed(1)) : undefined,
   };
 }
 
