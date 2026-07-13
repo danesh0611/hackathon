@@ -8,6 +8,7 @@ import type {
   AlertItem,
   HeatmapPoint,
 } from "@/types/api";
+import axios from "axios";
 
 // ─── Mock Data ───────────────────────────────────────────────────────
 
@@ -95,17 +96,24 @@ export async function detectCurrency(image: File): Promise<CurrencyDetectionResu
 }
 
 export async function detectScam(payload: ScamDetectRequest): Promise<ScamDetectionResult> {
-  if (useMockData()) {
-    await new Promise((r) => setTimeout(r, 1200));
-    // Return different results based on text length for demo variety
-    if (payload.text.length < 20) {
-      return { risk: "Low", reason: "Text too short for reliable analysis. No scam indicators found.", confidence: 30 };
-    }
-    return mockScamResult;
-  }
+  // Call the actual API regardless of mock settings
+  const { data } = await axios.post("/api/scamshield/analyze-text", {
+    text: payload.text,
+  });
 
-  const { data } = await api.post<ScamDetectionResult>("/scam-detect", payload);
-  return data;
+  let risk: "Low" | "Medium" | "High" = "Medium";
+  if (data.scam_probability > 75) risk = "High";
+  else if (data.scam_probability < 30) risk = "Low";
+
+  const reason = data.reasons?.length 
+    ? data.reasons.map((r: any) => r.why).join(" ") 
+    : data.verdict;
+
+  return {
+    risk,
+    reason,
+    confidence: Math.round(data.scam_probability),
+  };
 }
 
 export async function fetchAlerts(lat?: number, lng?: number): Promise<AlertItem[]> {

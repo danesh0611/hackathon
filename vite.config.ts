@@ -11,4 +11,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api/scamshield': {
+        target: 'http://74.225.145.225:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/scamshield/, '')
+      }
+    }
+  }
 })
