@@ -6,18 +6,16 @@ import { Activity, MapPin, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Analytics() {
-  const [dashboardData, setDashboardData] = useState<any>(null);
   const [statisticsData, setStatisticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [dashData, statData] = await Promise.all([
+        const [, statData] = await Promise.all([
           fetchDashboard(),
           import("@/services/police").then(m => m.fetchStatistics())
         ]);
-        setDashboardData(dashData);
         setStatisticsData(statData);
       } catch (err) {
         console.error(err);
