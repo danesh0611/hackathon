@@ -35,6 +35,8 @@ export interface ReportPayload {
   currencyImage?: File;
   audio?: File;
   video?: File;
+  lat?: number;
+  lng?: number;
 }
 
 export interface ReportResponse {
@@ -97,6 +99,8 @@ export interface DashboardMetrics {
   activeFraudRings: MetricCard;
   highRiskAreas: MetricCard;
   aiAlerts: MetricCard;
+  officersOnline?: number;
+  resolutionRate?: number;
 }
 
 export interface MetricCard {

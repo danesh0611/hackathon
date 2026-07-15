@@ -6,14 +6,19 @@ import { Activity, MapPin, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Analytics() {
-  const [_dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [statisticsData, setStatisticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchDashboard();
-        setDashboardData(data);
+        const [dashData, statData] = await Promise.all([
+          fetchDashboard(),
+          import("@/services/police").then(m => m.fetchStatistics())
+        ]);
+        setDashboardData(dashData);
+        setStatisticsData(statData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -23,31 +28,10 @@ export default function Analytics() {
     load();
   }, []);
 
-  // Mock bar chart data since it's not in the API yet
-  const weeklyResolution = [
-    { day: "Mon", resolved: 12 },
-    { day: "Tue", resolved: 19 },
-    { day: "Wed", resolved: 15 },
-    { day: "Thu", resolved: 22 },
-    { day: "Fri", resolved: 28 },
-    { day: "Sat", resolved: 14 },
-    { day: "Sun", resolved: 8 },
-  ];
-
-  const cityDistribution = [
-    { city: "Chennai", cases: 342 },
-    { city: "Coimbatore", cases: 210 },
-    { city: "Madurai", cases: 150 },
-    { city: "Trichy", cases: 90 },
-    { city: "Salem", cases: 60 },
-  ];
-
-  const casePie = [
-    { name: "Scam", value: 450, color: "hsl(var(--chart-1))" },
-    { name: "Counterfeit", value: 120, color: "hsl(var(--chart-2))" },
-    { name: "Fraud Call", value: 310, color: "hsl(var(--chart-3))" },
-    { name: "Digital Arrest", value: 80, color: "hsl(var(--chart-4))" },
-  ];
+  const weeklyResolution = statisticsData?.weeklyResolutionData || [];
+  const casePie = statisticsData?.scamTypes || [];
+  const cityDistribution = statisticsData?.stateWiseCases || [];
+  const avgResolutionTime = statisticsData?.avgResolutionTime !== undefined ? statisticsData.avgResolutionTime : 4.2;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -69,7 +53,7 @@ export default function Analytics() {
           </div>
           <div>
             <div className="text-sm text-muted-foreground">Avg Resolution Time</div>
-            <div className="text-2xl font-bold">4.2 days</div>
+            <div className="text-2xl font-bold">{avgResolutionTime} days</div>
           </div>
         </Card>
         
@@ -79,7 +63,7 @@ export default function Analytics() {
           </div>
           <div>
             <div className="text-sm text-muted-foreground">Top Hotspot</div>
-            <div className="text-2xl font-bold">T. Nagar</div>
+            <div className="text-2xl font-bold">Chennai Central</div>
           </div>
         </Card>
       </div>
@@ -107,8 +91,8 @@ export default function Analytics() {
         <BarChartCard
           title="Incident Distribution by Region"
           data={cityDistribution}
-          xKey="city"
-          yKeys={[{ key: "cases", name: "Reported Cases", color: "hsl(var(--chart-2))" }]}
+          xKey="label"
+          yKeys={[{ key: "value", name: "Reported Cases", color: "hsl(var(--chart-2))" }]}
           layout="vertical"
           isLoading={loading}
         />

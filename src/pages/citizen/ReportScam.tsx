@@ -1,4 +1,4 @@
-import { useState } from "react"; // Not correct, I should use react-hook-form
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar/Navbar";
 import { Footer } from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FileDropzone } from "@/components/upload/FileDropzone";
 import { EmergencyButton } from "@/components/EmergencyButton";
-import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldAlert, MapPin } from "lucide-react";
 import { submitReport } from "@/services/citizen";
 import type { ReportPayload } from "@/types/api";
 
@@ -16,15 +16,42 @@ export default function ReportScam() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [complaintId, setComplaintId] = useState("");
   const [error, setError] = useState("");
+  const [locationStatus, setLocationStatus] = useState<"pending" | "acquired" | "error">("pending");
 
   const [formData, setFormData] = useState<ReportPayload>({
     phone: "",
     description: "",
   });
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData((prev) => ({
+            ...prev,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }));
+          setLocationStatus("acquired");
+        },
+        (err) => {
+          console.error(err);
+          setLocationStatus("error");
+        }
+      );
+    } else {
+      setLocationStatus("error");
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (locationStatus !== "acquired" || !formData.lat || !formData.lng) {
+      setError("We need your accurate location to register this complaint. Please allow location access.");
+      return;
+    }
 
     // Basic validation
     if (!formData.phone.match(/^\+91[0-9]{10}$/) && !formData.phone.match(/^[0-9]{10}$/)) {
@@ -57,7 +84,7 @@ export default function ReportScam() {
   };
 
   const handleReset = () => {
-    setFormData({ phone: "", description: "" });
+    setFormData({ phone: "", description: "", lat: formData.lat, lng: formData.lng });
     setIsSuccess(false);
     setComplaintId("");
   };
@@ -129,14 +156,30 @@ export default function ReportScam() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description">Describe what happened</Label>
-                      <Textarea 
-                        id="description" 
-                        placeholder="Provide as much detail as possible (who contacted you, what did they ask for, etc.)" 
-                        className="min-h-[160px]"
+                      <Label>Additional Details & Context</Label>
+                      <Textarea
+                        placeholder="Provide any additional details..."
+                        className="min-h-[100px]"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        required
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Incident Location</Label>
+                      <div className="flex items-center gap-2 rounded-md border p-3 bg-muted/30">
+                        <MapPin className={`h-5 w-5 ${locationStatus === 'acquired' ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                        <div className="flex-1 text-sm">
+                          {locationStatus === 'pending' && <span className="text-muted-foreground">Acquiring your location...</span>}
+                          {locationStatus === 'error' && <span className="text-destructive font-medium">Location access denied. Please enable location services.</span>}
+                          {locationStatus === 'acquired' && (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              Accurate Location Acquired ({formData.lat?.toFixed(4)}, {formData.lng?.toFixed(4)})
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -175,7 +218,7 @@ export default function ReportScam() {
             )}
 
             <div className="mt-8 flex items-center gap-4 border-t border-border pt-6">
-              <Button type="submit" size="lg" disabled={isSubmitting} className="w-full sm:w-auto">
+              <Button type="submit" size="lg" disabled={isSubmitting || locationStatus !== 'acquired'} className="w-full sm:w-auto">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

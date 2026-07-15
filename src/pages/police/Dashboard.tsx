@@ -33,8 +33,8 @@ export default function Dashboard() {
 
   const totalCases = metrics?.todayComplaints?.value || 0;
   const activeThreats = metrics?.activeFraudRings?.value || 0;
-  const officersOnline = 234;
-  const resolutionRate = 92;
+  const officersOnline = metrics?.officersOnline !== undefined ? metrics.officersOnline : 0;
+  const resolutionRate = metrics?.resolutionRate !== undefined ? metrics.resolutionRate : 0;
   const trendData = { "2026-07-01": 10, "2026-07-02": 15, "2026-07-03": 12, "2026-07-04": 20, "2026-07-05": 18, "2026-07-06": 25, "2026-07-07": 47 };
   const caseTypeDistribution = { scam: 45, counterfeit: 30, fraud_call: 20, digital_arrest: 5 };
 

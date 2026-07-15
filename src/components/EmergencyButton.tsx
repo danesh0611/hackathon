@@ -9,6 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { buttonVariants } from "@/components/ui/button";
+
 interface EmergencyButtonProps {
   className?: string;
 }
@@ -16,11 +18,9 @@ interface EmergencyButtonProps {
 export function EmergencyButton({ className }: EmergencyButtonProps) {
   return (
     <Dialog>
-      <DialogTrigger>
-        <Button variant="destructive" className={className} size="lg">
-          <Phone className="mr-2 h-4 w-4" />
-          Emergency
-        </Button>
+      <DialogTrigger className={buttonVariants({ variant: "destructive", size: "lg", className })}>
+        <Phone className="mr-2 h-4 w-4" />
+        Emergency
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

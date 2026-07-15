@@ -9,7 +9,13 @@ export function useAuth() {
 
   return {
     ...auth,
-    login: (payload: LoginRequest) => dispatch(login(payload)),
+    login: async (payload: LoginRequest) => {
+      const resultAction = await dispatch(login(payload));
+      if (login.rejected.match(resultAction)) {
+        throw new Error(resultAction.payload as string || "Login failed");
+      }
+      return resultAction.payload;
+    },
     logout: () => dispatch(logout()),
     clearError: () => dispatch(clearError()),
   };

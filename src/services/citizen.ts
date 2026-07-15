@@ -69,6 +69,8 @@ export async function submitReport(payload: ReportPayload): Promise<ReportRespon
   if (payload.currencyImage) formData.append("currencyImage", payload.currencyImage);
   if (payload.audio) formData.append("audio", payload.audio);
   if (payload.video) formData.append("video", payload.video);
+  if (payload.lat) formData.append("lat", payload.lat.toString());
+  if (payload.lng) formData.append("lng", payload.lng.toString());
 
   const { data } = await api.post<ReportResponse>("/report", formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -169,7 +171,7 @@ export async function fetchAlerts(lat?: number, lng?: number): Promise<AlertItem
     return mockAlerts;
   }
 
-  const { data } = await api.get<AlertItem[]>("/alerts", { params: { lat, lng, radius: 10 } });
+  const { data } = await api.get<AlertItem[]>("/map-alerts", { params: { lat, lng, radius: 10 } });
   return data;
 }
 
@@ -180,5 +182,10 @@ export async function fetchHeatmapData(): Promise<HeatmapPoint[]> {
   }
 
   const { data } = await api.get<HeatmapPoint[]>("/heatmap");
+  return data;
+}
+
+export async function trackStatus(caseId: string): Promise<any> {
+  const { data } = await api.get(`/case/${caseId}`);
   return data;
 }

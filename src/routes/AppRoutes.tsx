@@ -8,6 +8,7 @@ import ReportScam from "@/pages/citizen/ReportScam";
 import CurrencyCheck from "@/pages/citizen/CurrencyCheck";
 import ScamCheck from "@/pages/citizen/ScamCheck";
 import NearbyAlerts from "@/pages/citizen/NearbyAlerts";
+import TrackStatus from "@/pages/citizen/TrackStatus";
 import PoliceLogin from "@/pages/police/Login";
 import PoliceDashboard from "@/pages/police/Dashboard";
 import LiveMap from "@/pages/police/LiveMap";
@@ -26,6 +27,7 @@ export default function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/citizen" element={<CitizenPortal />} />
         <Route path="/citizen/report" element={<ReportScam />} />
+        <Route path="/citizen/track" element={<TrackStatus />} />
         <Route path="/citizen/currency-check" element={<CurrencyCheck />} />
         <Route path="/citizen/scam-check" element={<ScamCheck />} />
         <Route path="/citizen/alerts" element={<NearbyAlerts />} />

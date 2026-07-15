@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -67,11 +67,9 @@ export function DataTable<T>({
         </div>
         {filterOptions && onFilter && (
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="outline" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                Filter
-              </Button>
+            <DropdownMenuTrigger className={buttonVariants({ variant: "outline", className: "gap-2" })}>
+              <SlidersHorizontal className="h-4 w-4" />
+              View
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onFilter("")}>All</DropdownMenuItem>

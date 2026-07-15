@@ -43,6 +43,7 @@ export function Navbar() {
             {(isLanding || isCitizen) && (
               <>
                 <NavLink to="/citizen/report">Report Scam</NavLink>
+                <NavLink to="/citizen/track">Track Status</NavLink>
                 <NavLink to="/citizen/currency-check">Check Currency</NavLink>
                 <NavLink to="/citizen/scam-check">Detect Scam</NavLink>
                 <NavLink to="/citizen/alerts">Alerts Map</NavLink>
@@ -112,6 +113,7 @@ export function Navbar() {
           <div className="flex flex-col gap-2">
             <MobileNavLink to="/citizen" onClick={() => setIsOpen(false)}>Citizen Portal</MobileNavLink>
             <MobileNavLink to="/citizen/report" onClick={() => setIsOpen(false)}>Report Scam</MobileNavLink>
+            <MobileNavLink to="/citizen/track" onClick={() => setIsOpen(false)}>Track Status</MobileNavLink>
             <MobileNavLink to="/citizen/currency-check" onClick={() => setIsOpen(false)}>Check Currency</MobileNavLink>
             <MobileNavLink to="/citizen/scam-check" onClick={() => setIsOpen(false)}>Detect Scam</MobileNavLink>
             <MobileNavLink to="/citizen/alerts" onClick={() => setIsOpen(false)}>Alerts Map</MobileNavLink>
