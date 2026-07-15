@@ -82,12 +82,44 @@ export async function detectCurrency(image: File): Promise<CurrencyDetectionResu
     return mockCurrencyResult;
   }
 
-  const formData = new FormData();
-  formData.append("image", image);
-  const { data } = await api.post<CurrencyDetectionResult>("/currency-detect", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+  const base64Image = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(image);
   });
-  return data;
+
+  try {
+    const { data } = await axios.post("/api/predict/upload", {
+      image: base64Image
+    });
+    
+    // Map Render API response format to our UI types
+    const isAuthentic = data.authentic === true || data.verdict === 'authentic';
+    const confidencePct = data.confidence ? Math.round(data.confidence * 100) : 0;
+    
+    const missingFeatures: string[] = [];
+    if (data.features) {
+      for (const [key, value] of Object.entries(data.features)) {
+        const feature = value as any;
+        if (feature.status === 'invalid' || feature.status === 'missing' || feature.present === false) {
+          // formatting camelCase keys to slightly more readable text
+          const readableKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          missingFeatures.push(`${readableKey}: ${feature.description || 'Missing or invalid'}`);
+        }
+      }
+    }
+    
+    return {
+      result: isAuthentic ? "Real" : "Fake",
+      confidence: confidencePct,
+      missingSecurityFeatures: missingFeatures,
+      aiExplanation: data.description || "Analysis complete."
+    };
+  } catch (error) {
+    console.error("Error in currency detection API:", error);
+    throw error;
+  }
 }
 
 export async function detectScam(payload: ScamDetectRequest): Promise<ScamDetectionResult> {

@@ -13,6 +13,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/predict': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
       '/api/scamshield': {
         target: 'http://74.225.145.225:8000',
         changeOrigin: true,

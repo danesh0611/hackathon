@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar/Navbar";
 import { Footer } from "@/components/footer/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RiskBadge } from "@/components/alerts/RiskBadge";
-import { detectScam } from "@/services/citizen";
-import type { ScamDetectionResult, ScamSource } from "@/types/api";
+import { detectScam, fetchAlerts, fetchHeatmapData } from "@/services/citizen";
+import type { ScamDetectionResult, ScamSource, AlertItem, HeatmapPoint } from "@/types/api";
 import { Loader2, MessageSquareWarning, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FileDropzone } from "@/components/upload/FileDropzone";
+import MapView from "@/components/maps/MapView";
+import { MarkerLayer } from "@/components/maps/MarkerLayer";
+import { HeatmapLayer } from "@/components/maps/HeatmapLayer";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function ScamCheck() {
   const [text, setText] = useState("");
@@ -17,6 +23,35 @@ export default function ScamCheck() {
   const [source, setSource] = useState<ScamSource>("sms");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<ScamDetectionResult | null>(null);
+  
+  const [shareToCommunity, setShareToCommunity] = useState(false);
+  const [alertBroadcasted, setAlertBroadcasted] = useState(false);
+
+  const { latitude, longitude, isLoading: locationLoading } = useGeolocation();
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [heatmap, setHeatmap] = useState<HeatmapPoint[]>([]);
+
+  useEffect(() => {
+    if (result) {
+      const loadData = async () => {
+        try {
+          const [alertsData, heatmapData] = await Promise.all([
+            fetchAlerts(latitude || undefined, longitude || undefined),
+            fetchHeatmapData(),
+          ]);
+          setAlerts(alertsData);
+          setHeatmap(heatmapData);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      if (!locationLoading) {
+         loadData();
+      }
+    }
+  }, [result, latitude, longitude, locationLoading]);
+
+  const center: [number, number] = latitude && longitude ? [latitude, longitude] : [13.0827, 80.2707];
 
   const placeholders = {
     sms: "Paste the SMS text here... e.g. 'Dear Customer, your electricity will be disconnected tonight by 9:30 PM...'",
@@ -130,6 +165,52 @@ export default function ScamCheck() {
                   </Button>
                 </div>
               )}
+
+              {result.risk === "High" && (
+                <div className="mt-4 p-4 border border-border rounded-xl bg-card shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox 
+                      id="share-alert" 
+                      checked={shareToCommunity} 
+                      onCheckedChange={(c) => setShareToCommunity(c as boolean)} 
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label htmlFor="share-alert" className="font-medium text-sm cursor-pointer">
+                        Share this alert on the community map
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Anonymously warn nearby users about this scam attempt.
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant={alertBroadcasted ? "default" : "outline"}
+                    className={alertBroadcasted ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}
+                    disabled={!shareToCommunity || alertBroadcasted}
+                    onClick={() => setAlertBroadcasted(true)}
+                  >
+                    {alertBroadcasted ? "Alert Shared ✓" : "Broadcast Alert"}
+                  </Button>
+                </div>
+              )}
+
+              <div className="mt-8 border border-border rounded-xl overflow-hidden shadow-sm">
+                <div className="p-4 bg-muted/50 border-b border-border">
+                  <h4 className="font-semibold text-foreground">Local Scam Alerts Map</h4>
+                  <p className="text-xs text-muted-foreground mt-1">See recent reports of similar activities in your area.</p>
+                </div>
+                <div className="h-[300px] w-full relative z-0">
+                  <MapView center={center} zoom={12}>
+                    <MarkerLayer 
+                      markers={alerts.map(a => ({ ...a, summary: a.description, caseId: undefined } as any))} 
+                      showScam={true}
+                      showCounterfeit={false}
+                    />
+                    {heatmap.length > 0 && <HeatmapLayer points={heatmap} />}
+                  </MapView>
+                </div>
+              </div>
             </div>
           )}
         </div>
