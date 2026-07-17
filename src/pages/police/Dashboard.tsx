@@ -10,6 +10,7 @@ import { formatDateTime, getCaseStatusConfig, getCaseTypeLabel } from "@/lib/uti
 import { ShieldAlert, Users, TrendingUp, AlertTriangle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import type { CaseListItem } from "@/types/api";
+import { loadDashboard } from "@/store/dashboardSlice";
 
 export default function Dashboard() {
   const dispatch = useAppDispatch();
@@ -19,13 +20,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     // load metrics
-    dispatch({ type: "dashboard/load" } as any); // just use the load action
+    dispatch(loadDashboard());
     
     // load cases directly
     fetchCases().then(res => setRecentCases(res.data)).catch(console.error);
     
     const interval = setInterval(() => {
-      dispatch({ type: "dashboard/load" } as any);
+      dispatch(loadDashboard());
       fetchCases().then(res => setRecentCases(res.data)).catch(console.error);
     }, 300000);
     return () => clearInterval(interval);
