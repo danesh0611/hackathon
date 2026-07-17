@@ -27,7 +27,13 @@ export default function FraudNetwork() {
         setLoading(false);
       }
     };
+    
+    // Initial load
     loadGraph();
+    
+    // Poll every 5 seconds for dynamic updates
+    const interval = setInterval(loadGraph, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleCenter = () => {
