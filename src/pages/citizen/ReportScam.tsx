@@ -26,6 +26,13 @@ export default function ReportScam() {
   });
 
   useEffect(() => {
+    const textParam = searchParams.get("text");
+    if (textParam) {
+      setFormData((prev) => ({ ...prev, description: textParam }));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
