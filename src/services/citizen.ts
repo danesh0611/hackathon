@@ -65,6 +65,9 @@ export async function submitReport(payload: ReportPayload): Promise<ReportRespon
   const formData = new FormData();
   formData.append("phone", payload.phone);
   formData.append("description", payload.description);
+  if (payload.source) formData.append("source", payload.source);
+  if (payload.suspectPhone) formData.append("suspect_phone", payload.suspectPhone);
+  if (payload.incidentDate) formData.append("incident_date", payload.incidentDate);
   if (payload.screenshot) formData.append("screenshot", payload.screenshot);
   if (payload.currencyImage) formData.append("currencyImage", payload.currencyImage);
   if (payload.audio) formData.append("audio", payload.audio);

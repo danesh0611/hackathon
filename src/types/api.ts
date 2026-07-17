@@ -31,6 +31,9 @@ export interface OfficerProfile {
 export interface ReportPayload {
   phone: string;
   description: string;
+  source?: string;
+  suspectPhone?: string;
+  incidentDate?: string;
   screenshot?: File;
   currencyImage?: File;
   audio?: File;

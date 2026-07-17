@@ -165,6 +165,45 @@ export default function ReportScam() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="source">How did you receive the scam? (Optional)</Label>
+                      <select
+                        id="source"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        value={formData.source || ""}
+                        onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                      >
+                        <option value="">Select source...</option>
+                        <option value="sms">SMS</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">Email</option>
+                        <option value="call">Phone Call</option>
+                        <option value="social">Social Media</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="suspectPhone">Scammer's Phone/ID (Optional)</Label>
+                        <Input 
+                          id="suspectPhone" 
+                          placeholder="e.g. 9876543210" 
+                          value={formData.suspectPhone || ""}
+                          onChange={(e) => setFormData({ ...formData, suspectPhone: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="incidentDate">Date & Time of Incident</Label>
+                        <Input 
+                          id="incidentDate" 
+                          type="datetime-local"
+                          value={formData.incidentDate || ""}
+                          onChange={(e) => setFormData({ ...formData, incidentDate: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Additional Details & Context</Label>
                       <Textarea
                         placeholder="Provide any additional details..."
