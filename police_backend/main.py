@@ -193,6 +193,37 @@ def get_fraud_network(db: Session = Depends(get_db)):
         edges=[schemas.GraphEdge(source=e.source_id, target=e.target_id, relationship=e.relationship, strength=e.strength) for e in edges]
     )
 
+@app.get("/api/fix-graph")
+def fix_graph(db: Session = Depends(get_db)):
+    import uuid
+    import re
+    cases = db.query(models.Case).all()
+    count = 0
+    for c in cases:
+        if not db.query(models.GraphNode).filter(models.GraphNode.label == f"Report: {c.id}").first():
+            report_node = models.GraphNode(id=f"R-{uuid.uuid4().hex[:6].upper()}", label=f"Report: {c.id}", type="scam_report", risk_score=0.5)
+            db.add(report_node)
+            victim_node = models.GraphNode(id=f"V-{uuid.uuid4().hex[:6].upper()}", label=f"Victim ({c.citizen_phone})", type="phone", risk_score=0.1)
+            db.add(victim_node)
+            db.add(models.GraphEdge(source_id=victim_node.id, target_id=report_node.id, relationship="reported_by", strength=1.0))
+            
+            has_suspects = False
+            phone_matches = re.findall(r'\b\d{10}\b', c.description) if c.description else []
+            if phone_matches:
+                for p in set(phone_matches):
+                    if p != c.citizen_phone:
+                        suspect_id = f"S-{uuid.uuid4().hex[:6].upper()}"
+                        db.add(models.GraphNode(id=suspect_id, label=f"Scammer Ph: {p}", type="phone", risk_score=0.95))
+                        db.add(models.GraphEdge(source_id=report_node.id, target_id=suspect_id, relationship="mentions_suspect", strength=0.9))
+                        has_suspects = True
+            if not has_suspects:
+                suspect_id = f"S-{uuid.uuid4().hex[:6].upper()}"
+                db.add(models.GraphNode(id=suspect_id, label="Unknown Scammer", type="suspect", risk_score=0.80))
+                db.add(models.GraphEdge(source_id=report_node.id, target_id=suspect_id, relationship="investigating", strength=0.5))
+            count += 1
+    db.commit()
+    return {"message": f"Successfully retroactively generated graph nodes for {count} old cases!"}
+
 @app.get("/api/statistics")
 def get_statistics(db: Session = Depends(get_db)):
     from sqlalchemy import func
