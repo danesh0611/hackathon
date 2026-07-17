@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/navbar/Navbar";
 import { Footer } from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { submitReport } from "@/services/citizen";
 import type { ReportPayload } from "@/types/api";
 
 export default function ReportScam() {
+  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [complaintId, setComplaintId] = useState("");
@@ -20,7 +22,7 @@ export default function ReportScam() {
 
   const [formData, setFormData] = useState<ReportPayload>({
     phone: "",
-    description: "",
+    description: searchParams.get("text") || "",
   });
 
   useEffect(() => {

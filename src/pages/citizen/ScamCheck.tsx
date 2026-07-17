@@ -158,7 +158,7 @@ export default function ScamCheck() {
                     This appears to be a dangerous scam attempt. Do not click any links or share personal information.
                   </div>
                   <Button asChild variant="destructive" size="sm" className="shrink-0">
-                    <Link to="/citizen/report">
+                    <Link to={`/citizen/report?text=${encodeURIComponent(text)}`}>
                       Report to Police
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
