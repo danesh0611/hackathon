@@ -39,9 +39,12 @@ export default function FraudNetwork() {
   const getNodeColor = (type: string) => {
     switch (type) {
       case "suspect": return "#EF4444"; // red
-      case "bank_account": return "#F59E0B"; // amber
-      case "phone_number": return "#3B82F6"; // blue
-      case "ip_address": return "#10B981"; // emerald
+      case "bank_account": 
+      case "account": return "#F59E0B"; // amber
+      case "phone_number": 
+      case "phone": return "#3B82F6"; // blue
+      case "ip_address": 
+      case "device": return "#10B981"; // emerald
       default: return "#6B7280";
     }
   };

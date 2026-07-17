@@ -263,8 +263,11 @@ def get_statistics(db: Session = Depends(get_db)):
 def submit_report(
     phone: str = Form(...),
     description: str = Form(...),
-    lat: float = Form(...),
-    lng: float = Form(...),
+    source: str = Form(None),
+    suspect_phone: str = Form(None),
+    incident_date: str = Form(None),
+    lat: float = Form(None),
+    lng: float = Form(None),
     screenshot: UploadFile = File(None),
     currencyImage: UploadFile = File(None),
     audio: UploadFile = File(None),
@@ -272,6 +275,8 @@ def submit_report(
     db: Session = Depends(get_db)
 ):
     import random
+    import uuid
+    import re
     case_id = f"CMP-2026-{random.randint(1000, 9999)}"
     
     # Simple logic to guess type based on description
@@ -293,6 +298,45 @@ def submit_report(
         lng=lng
     )
     db.add(new_case)
+    
+    # Generate Graph Nodes
+    report_node = models.GraphNode(id=f"R-{uuid.uuid4().hex[:6].upper()}", label=f"Report: {case_id}", type="scam_report", risk_score=0.5)
+    db.add(report_node)
+    
+    victim_node = models.GraphNode(id=f"V-{uuid.uuid4().hex[:6].upper()}", label=f"Victim ({phone})", type="phone", risk_score=0.1)
+    db.add(victim_node)
+    db.add(models.GraphEdge(source_id=victim_node.id, target_id=report_node.id, relationship="reported_by", strength=1.0))
+    
+    phone_matches = re.findall(r'\b\d{10}\b', description)
+    upi_matches = re.findall(r'\b[a-zA-Z0-9.\-_]+@[a-zA-Z]+\b', description)
+    has_suspects = False
+
+    if suspect_phone and suspect_phone != phone:
+        suspect_id = f"S-{uuid.uuid4().hex[:6].upper()}"
+        db.add(models.GraphNode(id=suspect_id, label=f"Scammer Ph: {suspect_phone}", type="phone", risk_score=0.98))
+        db.add(models.GraphEdge(source_id=report_node.id, target_id=suspect_id, relationship="mentions_suspect", strength=0.95))
+        has_suspects = True
+
+    if phone_matches:
+        for p in set(phone_matches):
+            if p != phone and p != suspect_phone:
+                suspect_id = f"S-{uuid.uuid4().hex[:6].upper()}"
+                db.add(models.GraphNode(id=suspect_id, label=f"Scammer Ph: {p}", type="phone", risk_score=0.95))
+                db.add(models.GraphEdge(source_id=report_node.id, target_id=suspect_id, relationship="mentions_suspect", strength=0.9))
+                has_suspects = True
+                
+    if upi_matches:
+        for u in set(upi_matches):
+            upi_id = f"U-{uuid.uuid4().hex[:6].upper()}"
+            db.add(models.GraphNode(id=upi_id, label=f"UPI: {u}", type="account", risk_score=0.99))
+            db.add(models.GraphEdge(source_id=report_node.id, target_id=upi_id, relationship="mentions_account", strength=0.95))
+            has_suspects = True
+
+    if not has_suspects:
+        suspect_id = f"S-{uuid.uuid4().hex[:6].upper()}"
+        db.add(models.GraphNode(id=suspect_id, label="Unknown Scammer", type="suspect", risk_score=0.80))
+        db.add(models.GraphEdge(source_id=report_node.id, target_id=suspect_id, relationship="investigating", strength=0.5))
+        
     db.commit()
     
     return {
