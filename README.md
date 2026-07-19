@@ -1,3 +1,5 @@
+https://scamdetect.centralindia.cloudapp.azure.com/
+
 ScamGuard: Comprehensive Project Documentation
 1. Project Overview
 ScamGuard (also known as ScamShield Pro) is a next-generation, AI-powered platform designed to combat the rapidly evolving landscape of digital fraud. By bridging the gap between public safety and law enforcement, ScamGuard provides real-time protection for citizens and advanced investigative tools for the police.
