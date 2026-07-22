@@ -191,6 +191,52 @@ async function startServer() {
       }
     }
 
+    // 3. Fallback to AWS Bedrock via local scam-api microservice
+    try {
+      console.log("Attempting AWS Bedrock fallback via local scam-api...");
+      let image_base64 = undefined;
+      let mime_type = "image/jpeg";
+      let text_prompt = "";
+      
+      for (const item of contents) {
+        if (typeof item === 'string') {
+          text_prompt += item + "\n";
+        } else if (item.inlineData) {
+          image_base64 = item.inlineData.data;
+          mime_type = item.inlineData.mimeType;
+        } else if (item.text) {
+          text_prompt += item.text + "\n";
+        }
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/analyze-currency", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64,
+          mime_type,
+          text_prompt,
+          system_instruction: systemInstruction
+        })
+      });
+
+      if (response.ok) {
+        const parsed = await response.json();
+        console.log("Successfully generated report using aws-bedrock fallback");
+        return {
+          result: parsed,
+          modelUsed: "aws-bedrock-nova-pro",
+          fallbackApplied: true,
+          offlineMode: false
+        };
+      } else {
+        const errText = await response.text();
+        console.warn("aws-bedrock fallback failed with status", response.status, errText);
+      }
+    } catch (e: any) {
+      console.warn("aws-bedrock fallback failed:", e.message);
+    }
+
     // High-fidelity offline mockup report when all options fail (e.g. no internet, bad key, or general 429 resource exhaustion)
     console.warn("All live Gemini models failed or quota exhausted. Generating intelligent context-aware local forensic report...");
 
