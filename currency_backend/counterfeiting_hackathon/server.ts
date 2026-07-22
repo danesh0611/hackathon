@@ -393,7 +393,7 @@ You MUST return your analysis strictly in the following JSON format:
       const notesContext = `${text || ""} ${imageUrl || ""}`;
       const { result, modelUsed, fallbackApplied, offlineMode } = await generateVerificationReport(
         contents,
-        "You are an advanced bank-note verification assistant. Analyze paper currency visual details, watermarks, engraving quality, thread features, serial alignments, and text sharpness. Output MUST be validated JSON adhering to the provided schema. CRITICAL RULE: If the serial number is all zeros (e.g. 000000), the note is a specimen/prop and MUST be marked as counterfeit.",
+        "You are an advanced bank-note verification assistant. Analyze Indian currency (Mahatma Gandhi series) features: 'भारत'/RBI security thread, light-and-shade watermarks, latent images, and raised intaglio prints. Output MUST be validated JSON adhering to the provided schema. CRITICAL RULE: If the serial number is all zeros (e.g. 000000), the note is a specimen/prop and MUST be marked as counterfeit.",
         0.2,
         notesContext
       );
@@ -442,14 +442,14 @@ You MUST return your analysis strictly in the following JSON format:
         },
       };
 
-      const textPrompt = `Conduct a thorough forensic validation on this banknote. Look closely for:
-1. Security Thread: Is it embedded, woven, or printed? Does it match the denomination?
-2. Watermark: Is there a matching portrait watermark in the empty space?
-3. Microprinting: Are fine text lines sharp and legible, or blurry/smudged (counterfeit indicator)?
-4. Color-Shifting Ink: Does the numeric value shift color (e.g., green-to-copper, gold-to-green)?
+      const textPrompt = `Conduct a thorough forensic validation on this banknote, specifically checking for Indian Banknote (Mahatma Gandhi Series) features. Look closely for:
+1. Security Thread: Is it a windowed thread reading 'भारत' (Bharat) and 'RBI' alternately? Is it embedded properly?
+2. Watermark: Is there a Mahatma Gandhi portrait watermark with a light and shade effect and multi-directional lines?
+3. Latent Image: Is there a latent image of the denomination value on the vertical band next to the portrait?
+4. Raised Print (Intaglio): Can you detect raised printing of the denomination or portrait for tactile identification?
 5. Serial Numbers: Is the spacing even, font distinct, and aligned correctly? CRITICAL RULE: If the serial number consists of all zeros (e.g., 000000, 000 000000), this is a specimen or fake prop note. You MUST flag it as counterfeit/high_risk.
-6. Paper Quality/Texture: Does it have distinctive fibers, raised printing, or look like standard flat copier paper?
-7. Print/Engraving Quality: Are portrait lines crisp, detailed, and clear, or soft and low-contrast?
+6. Fluorescence/Color-Shifting: Are there UV fluorescent elements or color-shifting inks visible?
+7. Microprinting & Paper Quality: Are fine text lines sharp? Does it have distinctive fibers, or look like standard flat copier paper?
 
 Provide your detailed forensic report in the requested JSON schema structure. Make sure your overall verdict and individual feature statuses are accurately filled out based on visual cues.
 ${textNotes ? `Merchant context: ${textNotes}` : ""}`;
