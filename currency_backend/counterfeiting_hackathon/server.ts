@@ -136,17 +136,32 @@ async function startServer() {
       "gemini-3.5-flash"
     ];
 
-    let ai: GoogleGenAI | null = null;
+    let aiClients: { client: GoogleGenAI | null; name: string }[] = [];
+    
+    // 1. Try Standard API Key Client
     try {
-      ai = getAiClient();
+      aiClients.push({ client: getAiClient(), name: "api-key" });
     } catch (e: any) {
-      console.warn("Skipping Gemini execution because API client couldn't be initialized:", e.message);
+      console.warn("Skipping standard Gemini execution:", e.message);
     }
 
-    if (ai) {
+    // 2. Add Vertex AI Fallback Client (uses ADC)
+    try {
+      const vertexAiClient = new GoogleGenAI({
+        vertexai: true,
+        project: process.env.GOOGLE_CLOUD_PROJECT || "scamguard-hackathon",
+        location: process.env.GOOGLE_CLOUD_LOCATION || "us-central1"
+      });
+      aiClients.push({ client: vertexAiClient, name: "vertex-ai" });
+    } catch (e: any) {
+      console.warn("Skipping Vertex AI fallback:", e.message);
+    }
+
+    for (const { client: ai, name: clientName } of aiClients) {
+      if (!ai) continue;
       for (const model of modelsToTry) {
         try {
-          console.log(`Attempting banknote analysis with model: ${model}`);
+          console.log(`Attempting banknote analysis with ${clientName} client using model: ${model}`);
           const response = await ai.models.generateContent({
             model: model,
             contents,
@@ -161,17 +176,17 @@ async function startServer() {
           const responseText = response.text;
           if (responseText) {
             const parsed = JSON.parse(responseText.trim());
-            console.log(`Successfully generated report using model: ${model}`);
+            console.log(`Successfully generated report using ${clientName} client with model: ${model}`);
             return {
               result: parsed,
-              modelUsed: model,
-              fallbackApplied: model !== "gemini-3.5-flash",
+              modelUsed: `${model} (${clientName})`,
+              fallbackApplied: clientName === "vertex-ai",
               offlineMode: false
             };
           }
         } catch (err: any) {
-          console.warn(`Model ${model} failed or quota exceeded:`, err.message || err);
-          // Continue to next model
+          console.warn(`${clientName} client with model ${model} failed:`, err.message || err);
+          // Continue to next model/client
         }
       }
     }
