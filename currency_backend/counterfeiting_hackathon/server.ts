@@ -209,6 +209,30 @@ async function startServer() {
         }
       }
 
+      const fallbackInstruction = systemInstruction + `
+      
+You MUST return your analysis strictly in the following JSON format:
+{
+  "authentic": boolean,
+  "confidence": number,
+  "verdict": "authentic" | "counterfeit" | "high_risk",
+  "description": "Detailed reasoning summarizing the visual forensic analysis. This is crucial.",
+  "recommendedAction": "Specific action for the cashier/merchant",
+  "features": {
+    "securityThread": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "watermark": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "microprinting": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "colorShiftingInk": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "serialNumbers": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "paperQuality": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number },
+    "printQuality": { "present": boolean, "status": "valid"|"suspicious"|"missing"|"unclear", "description": "string", "confidence": number }
+  },
+  "serialNumberDetected": "string",
+  "denominationDetected": "string",
+  "currencyDetected": "string"
+}
+`;
+
       const response = await fetch("http://127.0.0.1:8003/analyze-currency", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -216,7 +240,7 @@ async function startServer() {
           image_base64,
           mime_type,
           text_prompt,
-          system_instruction: systemInstruction
+          system_instruction: fallbackInstruction
         })
       });
 
