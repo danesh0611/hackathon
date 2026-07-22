@@ -393,7 +393,7 @@ You MUST return your analysis strictly in the following JSON format:
       const notesContext = `${text || ""} ${imageUrl || ""}`;
       const { result, modelUsed, fallbackApplied, offlineMode } = await generateVerificationReport(
         contents,
-        "You are an advanced bank-note verification assistant. Analyze paper currency visual details, watermarks, engraving quality, thread features, serial alignments, and text sharpness. Output MUST be validated JSON adhering to the provided schema.",
+        "You are an advanced bank-note verification assistant. Analyze paper currency visual details, watermarks, engraving quality, thread features, serial alignments, and text sharpness. Output MUST be validated JSON adhering to the provided schema. CRITICAL RULE: If the serial number is all zeros (e.g. 000000), the note is a specimen/prop and MUST be marked as counterfeit.",
         0.2,
         notesContext
       );
@@ -447,7 +447,7 @@ You MUST return your analysis strictly in the following JSON format:
 2. Watermark: Is there a matching portrait watermark in the empty space?
 3. Microprinting: Are fine text lines sharp and legible, or blurry/smudged (counterfeit indicator)?
 4. Color-Shifting Ink: Does the numeric value shift color (e.g., green-to-copper, gold-to-green)?
-5. Serial Numbers: Is the spacing even, font distinct, and aligned correctly?
+5. Serial Numbers: Is the spacing even, font distinct, and aligned correctly? CRITICAL RULE: If the serial number consists of all zeros (e.g., 000000, 000 000000), this is a specimen or fake prop note. You MUST flag it as counterfeit/high_risk.
 6. Paper Quality/Texture: Does it have distinctive fibers, raised printing, or look like standard flat copier paper?
 7. Print/Engraving Quality: Are portrait lines crisp, detailed, and clear, or soft and low-contrast?
 
@@ -456,7 +456,7 @@ ${textNotes ? `Merchant context: ${textNotes}` : ""}`;
 
       const { result, modelUsed, fallbackApplied, offlineMode } = await generateVerificationReport(
         [imagePart, textPrompt],
-        "You are CurrencyGuard AI, a leading-edge bank-note verification tool. Examine banknote images under virtual forensic filters. Return an accurate structural analysis conforming strictly to the requested JSON response schema.",
+        "You are CurrencyGuard AI, a leading-edge bank-note verification tool. Examine banknote images under virtual forensic filters. Return an accurate structural analysis conforming strictly to the requested JSON response schema. CRITICAL RULE: Any banknote with a serial number of all zeros is a fake/specimen and MUST be marked authentic: false and verdict: counterfeit.",
         0.1,
         textNotes || ""
       );
