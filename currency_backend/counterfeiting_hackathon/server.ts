@@ -214,7 +214,7 @@ async function startServer() {
 You MUST return your analysis strictly in the following JSON format:
 {
   "authentic": boolean,
-  "confidence": number,
+  "confidence": number (strictly between 0.0 and 1.0),
   "verdict": "authentic" | "counterfeit" | "high_risk",
   "description": "Detailed reasoning summarizing the visual forensic analysis. This is crucial.",
   "recommendedAction": "Specific action for the cashier/merchant",
@@ -246,6 +246,19 @@ You MUST return your analysis strictly in the following JSON format:
 
       if (response.ok) {
         const parsed = await response.json();
+        
+        // Normalize confidence scores if the AI returns 95 instead of 0.95
+        if (parsed.confidence > 1) {
+          parsed.confidence = parsed.confidence / 100;
+        }
+        if (parsed.features) {
+          for (const key in parsed.features) {
+            if (parsed.features[key] && parsed.features[key].confidence > 1) {
+              parsed.features[key].confidence = parsed.features[key].confidence / 100;
+            }
+          }
+        }
+
         console.log("Successfully generated report using aws-bedrock fallback");
         return {
           result: parsed,
